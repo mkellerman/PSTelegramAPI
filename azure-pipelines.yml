@@ -1,0 +1,44 @@
+
+# Docs: https://aka.ms/yaml
+name: $(Build.DefinitionName)_$(Date:yyyyMMdd))
+pr:
+- master
+
+queue:
+  name: Hosted VS2017
+
+steps:
+- powershell: .\bootstrap.ps1
+  displayName: 'Install pre-requisites'
+
+- task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
+  displayName: 'Pester Test Runner'
+  inputs:
+    scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
+    additionalModulePath: '$(Build.ArtifactStagingDirectory)'
+    CodeCoverageFolder: '$(Build.ArtifactStagingDirectory)'
+    resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+    CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  condition: always()
+  inputs:
+    testRunner: NUnit
+    searchFolder: '$(Common.TestResultsDirectory)'
+
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage'
+  inputs:
+    summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+
+- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles, PublishModule
+  displayName: 'Publish PowerShell Module'
+  env:
+    psgallery: $(NugetAPIKey)
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Module'
+  inputs:
+    ArtifactName: Module
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
