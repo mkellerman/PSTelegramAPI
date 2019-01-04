@@ -2,22 +2,39 @@
 function Wait-TLAsync {
 
     [cmdletbinding()]
-    Param ([parameter(ValueFromPipeline)][object]$InputObject)
+    Param (
+        [parameter(ValueFromPipeline)]
+        [System.Threading.Tasks.Task]$AsyncTask,
+        [switch]$PassThru
+    )
+
     Process {
 
-        While ($InputObject.Status.value__ -eq 1) { # WaitingForActivation
+        While ($AsyncTask.Status -eq 'WaitingForActivation') {
             Start-Sleep -Milliseconds 100
         }
 
-        If ($InputObject.Status.value__ -eq 5) {
-            Do { Start-Sleep -Milliseconds 100 } Until ($InputObject.Result)
-        } Else {
-            Throw $InputObject.Exception.InnerException.Message
-            # Write-Warning "Async Status: $($InputObject.Status) [$($InputObject.Status.value__)]"
-            # Write-Warning $InputObject.Exception.InnerException.Message
+        If ($AsyncTask.IsFaulted -or $AsyncTask.IsCanceled) {
+
+            Write-Warning "Wait-TLAsync: Error: $($AsyncTask.Exception.InnerException.Message)"
+
+            If ($TimeToWait = [int]$AsyncTask.Exception.InnerException.TimeToWait.TotalSeconds) {
+                Start-Sleep -Seconds $TimeToWait
+            } Else {
+                Throw $AsyncTask.Exception.InnerException.Message
+            }
+
         }
 
-        Return $InputObject
+        If ($AsyncTask.IsCompleted) {
+            While (-Not $AsyncTask.Result) { Start-Sleep -Milliseconds 100 }
+        }
+
+        If ($PassThru) {
+            Return $AsyncTask
+        } Else {
+            Return $AsyncTask.Result
+        }
 
     }
 
