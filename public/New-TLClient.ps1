@@ -1,34 +1,51 @@
-function New-TLClient ($apiId, $apiHash, $phoneNumber) {
+function New-TLClient {
 
-    $TLClient = [TLSharp.Core.TelegramClient]::new($apiId, $apiHash, $Null, [int64]$phoneNumber, $null)
-    Do {
-        $Async = $TLClient.ConnectAsync()
-        If ($TimeToWait = $Async.Exception.InnerException.TimeToWait.TotalSeconds) {
-            Write-Warning "WAITING: $TimeToWait"
-            Start-Sleep -Seconds $TimeToWait
+    [cmdletbinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [int]$ApiId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiHash,
+
+        [Parameter(Mandatory = $true)]
+        [int64]$PhoneNumber
+    )
+
+    Begin {
+
+        Write-Verbose "[$(Get-Date)] [BEGIN] New-TLClient: ${PhoneNumber}"
+
+    }
+
+    Process {
+
+        $TLClient = [TLSharp.Core.TelegramClient]::New($ApiId, $ApiHash, $Null, $PhoneNumber, $null)
+
+        Do {
+
+            Write-Debug "`t Executing TLClient.ConnectAsync()"
+            $Result = $TLClient.ConnectAsync() | Wait-TLAsync
+
+        } Until ($Result)
+
+        If (-Not $TLClient.IsUserAuthorized()) {
+
+            Write-Debug "`t Executing TLClient.SendCodeRequestAsync()"
+            $Hash = $TLClient.SendCodeRequestAsync("+${phoneNumber}") | Wait-TLAsync
+
+            $Code = Read-Host "Code from telegram"
+            Write-Debug "`t Executing TLClient.MakeAuthAsync()"
+            $Result = $TLClient.MakeAuthAsync($PhoneNumber, $Hash, $Code) | Wait-TLAsync
+
         }
-    } Until ($IsConnected = $Async.Result)
-
-    If (-Not($TLClient.IsUserAuthorized())) {
-
-        Do {
-            $Async = $TLClient.SendCodeRequestAsync("+${phoneNumber}") | Wait-TLAsync
-            If ($TimeToWait = $Async.Exception.InnerException.TimeToWait.TotalSeconds) { Start-Sleep -Seconds $TimeToWait }
-        } Until ($Hash = $Async.Result)
-
-        $Code = Read-Host "Code from telegram"
-
-        Do {
-            $Async = $TLClient.MakeAuthAsync($phoneNumber, $Hash, $Code) | Wait-TLAsync
-            If ($TimeToWait = $Async.Exception.InnerException.TimeToWait.TotalSeconds) { Start-Sleep -Seconds $TimeToWait }
-        } Until ($User = $Async.Result)
 
     }
 
-    If (-Not($TLClient.IsUserAuthorized())) {
-        Throw "Error: IsUserAuthorized = False"
+    End {
+
+        Write-Verbose "[$(Get-Date)] [END  ] New-TLClient: ${PhoneNumber}"
+        Return $TLClient
+
     }
-
-    Return $TLClient
-
 }
