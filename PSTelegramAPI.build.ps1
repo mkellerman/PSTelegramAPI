@@ -135,7 +135,7 @@ task PublishModule -If ($Configuration -eq 'Production') {
         # Build a splat containing the required details and make sure to Stop for errors which will trigger the catch
         $params = @{
             Path        = ('{0}\Output\PSTelegramAPI' -f $PSScriptRoot )
-            NuGetApiKey = $env:psgallery
+            NuGetApiKey = $ENV:NuGetApiKey
             ErrorAction = 'Stop'
         }
         Publish-Module @params
