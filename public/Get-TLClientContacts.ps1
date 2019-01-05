@@ -1,11 +1,32 @@
-function Get-TLClientContacts ($TLClient) {
+function Get-TLClientContacts {
 
-    # Contact list that is synced with users phone. :/
-    Do {
-        $Async = $TLClient.GetContactsAsync() | Wait-TLAsync
-        If ($TimeToWait = $Async.Exception.InnerException.TimeToWait.TotalSeconds) { Start-Sleep -Seconds $TimeToWait }
-    } Until ($Result = $Async.Result)
 
-    Return $Result
+    [cmdletbinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [TLSharp.Core.TelegramClient]$TLClient
+    )
+
+    Begin {
+
+        Write-Verbose "[$(Get-Date)] [BEGIN] $($MyInvocation.MyCommand)"
+
+    }
+
+    Process {
+
+        Write-Debug "`t Executing: GetContactsAsync()"
+
+        $Result = $TLClient.GetContactsAsync() | Wait-TLAsync
+
+    }
+
+    End {
+
+        Write-Verbose "[$(Get-Date)] [END  ] $($MyInvocation.MyCommand)"
+
+        Return $Result
+
+    }
 
 }

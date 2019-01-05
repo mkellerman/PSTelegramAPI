@@ -7,74 +7,68 @@ function Get-TLHistory {
         [int]$OffsetId = 0,
         [int]$OffsetDate = 0,
         [int]$AddOffset = 0,
-        [int]$Limit = 100,
+        [int]$Limit = [int]::MaxValue,
         [int]$MaxId = 0,
-        [int]$MinId = 0,
-        [int]$Count = [int]::MaxValue,
-        [int]$HasMessages = 0
+        [int]$MinId = 0
     )
 
-    $Loop = $True
-    $MessageTotal = 0
-    $Users = @(); $Chats = @(); $Channels = @(); $Messages = @()
+    Begin {
 
-    Do {
+        Write-Verbose "[$(Get-Date)] [BEGIN] $($MyInvocation.MyCommand)"
 
-        if ($Peer.ChannelId) { $ContextId = $Peer.ChannelId }
-        if ($Peer.ChatId) { $ContextId = $Peer.ChatId }
-        if ($Peer.UserId) { $ContextId = $Peer.UserId }
+        $LimitPerRequest = 100
+        $Results = New-Object System.Collections.ArrayList
 
-        #Write-Verbose "GetHistoryAsync: Peer:${ContextId}, OffsetId:${OffsetId}, OffsetDate:${OffsetDate}, AddOffset:${AddOffset}, Limit:${Limit}, MaxId:${MaxId}, MinId:${MinId}"
+    }
+
+    Process {
+
+        $MessageTotal = 0
 
         Do {
 
-            $Async = $TLClient.GetHistoryAsync($Peer, $OffsetId, $OffsetDate, $AddOffSet, $Limit, $MaxId, $MinId) | Wait-TLAsync
+            If ($Limit -lt $LimitPerRequest) { $LimitPerRequest = $Limit }
 
-            If ($TimeToWait = $Async.Exception.InnerException.TimeToWait.TotalSeconds) { Start-Sleep -Seconds $TimeToWait }
-            If (-Not($TimeToWait) -and ($Async.Exception.InnerException.Message)) {
-                Throw $Async.Exception.InnerException.Message
-            }
+            Write-Verbose "[$(Get-Date)] [INFO ]   > GetHistoryAsync ($Peer, ${OffsetId}, ${OffsetDate}, ${AddOffSet}, ${LimitPerRequest}, ${MaxId}, ${MinId})"
+            $Result = $TLClient.GetHistoryAsync($Peer, $OffsetId, $OffsetDate, $AddOffSet, $LimitPerRequest, $MaxId, $MinId) | Wait-TLAsync
 
-        } Until ($Result = $Async.Result)
+            [void] $Results.Add($Result)
 
-        If ($Result.Users.Count) {
-            $Users    += $Result.Users.Where({ 'TLUser', 'TLUserForbidden' -contains $_.GetType().Name }) | ConvertFrom-TLObject
-        }
-        If ($Result.Chats.Count) {
-            $Chats    += $Result.Chats.Where({ 'TLChat', 'TLChatForbidden' -contains $_.GetType().Name }) | ConvertFrom-TLObject
-            $Channels += $Result.Chats.Where({ 'TLChannel', 'TLChannelForbidden' -contains $_.GetType().Name }) | ConvertFrom-TLObject
-        }
-        If ($Result.Messages.Count) {
-            $Messages += $Result.Messages | ConvertFrom-TLObject
-        }
+            $OffsetId = $Result.Messages[-1].Id
+            $Limit -= $LimitPerRequest
 
-        $MeasureMessages = $Result.Messages.Id | Measure-Object -Minimum -Maximum
-        If($MeasureMessages.Count -lt $Limit) { $Loop = $False }
 
-        If (($MessageTotal -eq 0) -and ($MeasureMessages.Count -gt $Result.Count)) {
-            $MessageTotal = $MeasureMessages.Count
-        } Else {
-            $MessageTotal = $Result.Count
-        }
+        } Until (($Limit -eq 0) -or ($Result.Messages.Count -lt $LimitPerRequest))
 
-        Write-Warning "Results : $($MeasureMessages.Maximum) > $($MeasureMessages.Minimum) [$($MeasureMessages.Count)] `t| $($Messages.Count + $HasMessages)/$($MessageTotal)"
-
-        If ($MessageTotal -eq 0) { Break }
-        If ($Messages.Count -ge $Count) { Break }
-        If (($Messages.Count + $HasMessages) -ge $MessageTotal) { Break }
-
-        $OffSetId = $MeasureMessages.Minimum
-
-    } While ($Loop)
-
-    $Result = [PSCustomObject]@{
-        User    = $Users
-        Chat    = $Chats
-        Channel = $Channels
-        Message = $Messages
-        MessageTotal = $MessageTotal
     }
 
-    Return $Result
+    End {
+
+        Switch ($Results[0].GetType().Name) {
+            'TLChannelMessages' { $MessageCount = $Results[0].Count }
+            'TLMessages'        { $MessageCount = $Results.Messages.Count }
+            Default {
+                Write-Warning "Unknown Type returned : $_"
+            }
+        }
+
+        [object[]]$TLUsers    = $Results.Users # | Group-Object Id | ForEach-Object { $_.Group[-1] }
+        [object[]]$TLChats    = $Results.Chats # | Group-Object Id | ForEach-Object { $_.Group[-1] }
+        [object[]]$TLMessages = $Results.Messages # | Group-Object Id | ForEach-Object { $_.Group[-1] }
+
+        Write-Verbose "[$(Get-Date)] [INFO ]   > Messages: $($TLMessages.Count) | Users: $($TLUsers.Count) | Chats: $($TLChats.Count) | Count: $($MessageCount)"
+
+        $Result = [PSCustomObject]@{
+            Users    = $Results | Select-Object -Expand Users
+            Chats    = $Results | Select-Object -Expand Chats
+            Messages = $Results | Select-Object -Expand Messages
+            Count = $MessageCount
+        }
+
+        Write-Verbose "[$(Get-Date)] [END  ] $($MyInvocation.MyCommand)"
+
+        Return $Result
+
+    }
 
 }
