@@ -74,7 +74,7 @@ task CopyModuleFiles {
 
     }
 
-    Copy-Item -Path '.\en-US\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
+    #Copy-Item -Path '.\en-US\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\lib\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\public\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\private\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
