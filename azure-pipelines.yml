@@ -12,7 +12,7 @@ steps:
   displayName: 'Install pre-requisites'
 
 - powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
-  displayName: 'Publish PowerShell Module'
+  displayName: 'Build PowerShell Module'
 
 - task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
   displayName: 'Pester Test Runner'
@@ -34,6 +34,9 @@ steps:
   displayName: 'Publish code coverage'
   inputs:
     summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+
+- powershell: Invoke-Build -Configuration 'Production' -Task PublishModule
+  displayName: 'Publish PowerShell Module'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: Module'
