@@ -11,12 +11,15 @@ steps:
 - powershell: .\bootstrap.ps1
   displayName: 'Install pre-requisites'
 
+- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
+  displayName: 'Publish PowerShell Module'
+
 - task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
   displayName: 'Pester Test Runner'
   inputs:
     scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
-    additionalModulePath: '$(Build.ArtifactStagingDirectory)'
-    CodeCoverageFolder: '$(Build.ArtifactStagingDirectory)'
+    additionalModulePath: '$(System.DefaultWorkingDirectory)\output'
+    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\output'
     resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
     CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
@@ -32,13 +35,8 @@ steps:
   inputs:
     summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
-- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
-  displayName: 'Publish PowerShell Module'
-  env:
-    psgallery: $(NugetAPIKey)
-
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: Module'
   inputs:
     ArtifactName: Module
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '$(System.DefaultWorkingDirectory)\output'
