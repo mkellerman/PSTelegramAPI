@@ -21,39 +21,42 @@ task UpdateHelp {
 #region Task to retrieve latest version of TLSharp Packages
 # More info: https://www.nuget.org/packages/TLSharp
 task GetLatestTLSharpPackage {
-    & nuget list TLSharp | Where-Object {$_ -match '^TLSharp.\d.\d.\d'}
+    Find-Package -Name TLSharp -Provider Nuget -Source 'https://www.nuget.org/api/v2'
 }
 #endregion
 
 #region Task to Update TLSharp Package if newer version is released
 task UpdateTLSharpPackage {
+
     # Check current TLSharp Package version
     # Get TLSharp.Core.dll file properties
-    $File = Get-ChildItem -Path .\lib\ -Filter TLSharp.Core.dll -Recurse | Select-Object -First 1
-    [Version]$ProductVersion = $File.VersionInfo.ProductVersion
+    $ProductionPath = Get-ChildItem -Path .\lib\ -Filter TLSharp.Core.dll -Recurse | Select-Object -Expand Directory
+    $ProductionFolder = Split-Path $ProductionPath -Leaf
+    [Version]$ProductVersion = ($ProductionFolder -Split "\.")[-4,-3,-2,-1] -Join "."
     Write-Output -InputObject ('ProductVersion {0}' -f $ProductVersion)
 
     # Check latest version TLSharpPackage
-    [Version]$LatestVersion = ((& nuget list TLSharp | Where-Object {$_ -match '^TLSharp.\d.\d.\d'}).split(' '))[1]
+    $LatestPackage = Find-Package -Name TLSharp -Provider Nuget -Source 'https://www.nuget.org/api/v2'
+    [Version]$LatestVersion = $LatestPackage.Version
     Write-Output -InputObject ('Latest Version {0}' -f $LatestVersion)
 
     #Download latest version when newer
     If ($LatestVersion -gt $ProductVersion) {
+
         Write-Output -InputObject ('Newer version {0} available' -f $LatestVersion)
         #Install TLSharp package to temp folder
-        nuget install TLSharp -OutputDirectory ([IO.Path]::GetTempPath())
+        $LatestPackage | Install-Package -Force -Confirm:$false | Out-Null
+        $LatestPackage = Get-Package -Name TLSharp
+        $LatestPath = Split-Path $LatestPackage.Source
+        $LatestFolder = Split-Path $LatestPath -Leaf
+
+        Write-Output -InputObject ('Remove current TLSharp binaries')
+        Remove-Item -Path $ProductionFolder -Recurse -Force -Confirm:$false
 
         Write-Output -InputObject ('Copy TLSharp binaries to PSTelegramAPI Module')
-        $libpath = Resolve-Path -Path ("$([IO.Path]::GetTempPath())" + "*TLSharp*\lib*")
-        Copy-Item -Path ($($libpath.path) + '\*') -Destination .\lib\TLSharp -Recurse
+        New-Item -Path ".\lib\${LatestFolder}" -ItemType Directory | Out-Null
+        Get-ChildItem -Path $LatestPath -Filter *.dll -Recurse | Copy-Item -Destination ".\lib\${LatestFolder}"
 
-        Write-Output -InputObject ('Copy Newtonsoft binaries to PSTelegramAPI Module')
-        $libpath = Resolve-Path -Path ("$([IO.Path]::GetTempPath())" + "*newtonsoft*\lib*")
-        $libpathnewtonsoftstandard = $libpath | Get-ChildItem -Filter netstandard*| Sort-Object -Property Name -Descending | Select-Object -First 1
-        Copy-Item -Path ($($libpathnewtonsoftstandard.FullName) + '\*') -include *.xml, *.dll -Destination (".\lib\Newtonsoft\$($libpathnewtonsoftstandard.name)")
-
-        $libpathnewtonsoftnet = $libpath | Get-ChildItem -Filter net*| Sort-Object -Property Name -Descending | Select-Object -First 1
-        Copy-Item -Path ($($libpathnewtonsoftnet.FullName) + '\*') -include *.xml, *.dll -Destination (".\lib\Newtonsoft\$($libpathnewtonsoftnet.name)")
     }
     else {
         Write-Output -InputObject ('Current local version {0}. Latest version {1}' -f $ProductVersion, $LatestVersion)
@@ -74,6 +77,7 @@ task CopyModuleFiles {
     Copy-Item -Path '.\en-US\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\lib\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\public\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
+    Copy-Item -Path '.\private\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
     Copy-Item -Path '.\tests\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
 
     #Copy Module Manifest files
