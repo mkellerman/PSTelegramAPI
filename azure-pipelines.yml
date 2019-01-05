@@ -32,7 +32,7 @@ steps:
   inputs:
     summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
-- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles, PublishModule
+- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
   displayName: 'Publish PowerShell Module'
   env:
     psgallery: $(NugetAPIKey)
