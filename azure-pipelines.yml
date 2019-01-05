@@ -9,7 +9,7 @@ queue:
 
 steps:
 - powershell: .\bootstrap.ps1
-  displayName: 'Install pre-requisites'
+  displayName: 'Initialize Environment'
 
 - powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
   displayName: 'Build PowerShell Module'
@@ -31,7 +31,7 @@ steps:
     searchFolder: '$(Common.TestResultsDirectory)'
 
 - task: PublishCodeCoverageResults@1
-  displayName: 'Publish code coverage'
+  displayName: 'Publish Code Coverage'
   inputs:
     summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
@@ -39,7 +39,7 @@ steps:
   displayName: 'Publish PowerShell Module'
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: Module'
+  displayName: 'Publish Build Artifacts'
   inputs:
     ArtifactName: Module
     PathtoPublish: '$(System.DefaultWorkingDirectory)\output'
