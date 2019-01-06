@@ -99,6 +99,7 @@ task Test {
         OutputFile = "${OutputPath}\Test-PSTelegramAPI.xml"
         CodeCoverage = '.\PSTelegramAPI\*\*.ps1'
         CodeCoverageOutputFile = "${OutputPath}\CodeCoverage-PSTelegramAPI.xml"
+        CodeCoverageOutputFileFormat = 'JaCoCo'
     }
 
     $Result = Invoke-Pester @PesterParams -PassThru

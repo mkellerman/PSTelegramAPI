@@ -33,13 +33,13 @@ steps:
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Code Coverage'
   inputs:
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)\TestResults\CodeCoverage.PSTelegramAPI.xml'
-
-- powershell: Invoke-Build -Configuration 'Production' -Task PublishModule
-  displayName: 'Publish PowerShell Module'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)\TestResults\CodeCoverage-PSTelegramAPI.xml'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Build Artifacts'
   inputs:
     ArtifactName: Module
     PathtoPublish: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
+
+- powershell: Invoke-Build -Configuration 'Production' -Task PublishModule
+  displayName: 'Publish PowerShell Module'
