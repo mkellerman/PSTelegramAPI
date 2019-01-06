@@ -9,6 +9,10 @@ param ($Configuration = 'Development')
 Set-StrictMode -Version Latest
 #endregion
 
+#region Set-BuildEnvironment
+Set-BuildEnvironment -Force -ErrorAction SilentlyContinue
+#endregion
+
 #region Task to Update TLSharp Package if newer version is released
 task UpdateTLSharpPackage {
 
@@ -98,8 +102,6 @@ task UpdateManifest {
 #region Task to Publish Module to PowerShell Gallery
 task PublishModule -If ($Configuration -eq 'Production') {
     Try {
-
-        Set-BuildEnvironment
 
         # Publish to gallery with a few restrictions
         if(
