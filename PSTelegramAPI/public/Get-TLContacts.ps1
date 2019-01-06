@@ -1,4 +1,4 @@
-function Get-TLClientContacts {
+function Get-TLContacts {
 
 
     [cmdletbinding()]
