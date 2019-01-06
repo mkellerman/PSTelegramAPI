@@ -1,8 +1,9 @@
+[![Build status](https://mkellerman.visualstudio.com/PSTelegramAPI/_apis/build/status/PSTelegramAPI-CI)](https://mkellerman.visualstudio.com/PSTelegramAPI/_build/latest?definitionId=3)
+
 # PSTelegramAPI
 
 PowerShell Module for Telegram APIs
 
+# References
 
-References:
-https://github.com/mkellerman/TLSharp
-https://stefanstranger.github.io/2018/12/30/UseAzurePipelinesToPublishPowerShellModule/
+<https://github.com/sochix/TLSharp> : Telegram client library implemented in C#

@@ -9,20 +9,8 @@ param ($Configuration = 'Development')
 Set-StrictMode -Version Latest
 #endregion
 
-#region Task to Update the PowerShell Module Help Files.
-# Pre-requisites: PowerShell Module PlatyPS.
-task UpdateHelp {
-    Import-Module .\PSTelegramAPI.psd1 -Force
-    Update-MarkdownHelp .\docs
-    New-ExternalHelp -Path .\docs -OutputPath .\en-US -Force
-}
-#endregion
-
-#region Task to retrieve latest version of TLSharp Packages
-# More info: https://www.nuget.org/packages/TLSharp
-task GetLatestTLSharpPackage {
-    Find-Package -Name TLSharp -Provider Nuget -Source 'https://www.nuget.org/api/v2'
-}
+#region Set-BuildEnvironment
+Set-BuildEnvironment -Force -ErrorAction SilentlyContinue
 #endregion
 
 #region Task to Update TLSharp Package if newer version is released
@@ -64,34 +52,21 @@ task UpdateTLSharpPackage {
 }
 #endregion
 
-#region Task to Copy PowerShell Module files to output folder for release as Module
-task CopyModuleFiles {
-
-    # Copy Module Files to Output Folder
-    if (-not (Test-Path .\output\PSTelegramAPI)) {
-
-        $null = New-Item -Path .\output\PSTelegramAPI -ItemType Directory
-
-    }
-
-    #Copy-Item -Path '.\en-US\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
-    Copy-Item -Path '.\lib\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
-    Copy-Item -Path '.\public\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
-    Copy-Item -Path '.\private\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
-    Copy-Item -Path '.\tests\' -Filter *.* -Recurse -Destination .\output\PSTelegramAPI -Force
-
-    #Copy Module Manifest files
-    Copy-Item -Path @(
-        '.\README.md'
-        '.\PSTelegramAPI.psd1'
-        '.\PSTelegramAPI.psm1'
-    ) -Destination .\output\PSTelegramAPI -Force
-}
-#endregion
-
 #region Task to run all Pester tests in folder .\tests
 task Test {
-    $Result = Invoke-Pester .\tests -PassThru
+
+    $OutputPath = New-Item -Path '.\TestResults' -ItemType Directory -Force -Verbose
+
+    $PesterParams = @{
+        Script = '.\Tests'
+        OutputFile = "${OutputPath}\TestResults-PSTelegramAPI.xml"
+        CodeCoverage = 'PSTelegramAPI\*\*.ps1'
+        CodeCoverageOutputFile = "${OutputPath}\CodeCoverage-PSTelegramAPI.xml"
+        CodeCoverageOutputFileFormat = 'JaCoCo'
+    }
+
+    $Result = Invoke-Pester @PesterParams -PassThru
+
     if ($Result.FailedCount -gt 0) {
         throw 'Pester tests failed'
     }
@@ -102,44 +77,60 @@ task Test {
 #region Task to update the Module Manifest file with info from the Changelog in Readme.
 task UpdateManifest {
     # Import PlatyPS. Needed for parsing README for Change Log versions
-    Import-Module -Name PlatyPS
+    #Import-Module -Name PlatyPS
 
-    # Find Latest Version in README file from Change log.
-    $README = Get-Content -Path .\README.md
-    $MarkdownObject = [Markdown.MAML.Parser.MarkdownParser]::new()
-    [regex]$regex = '\d\.\d\.\d'
-    $Versions = $regex.Matches($MarkdownObject.ParseString($README).Children.Spans.Text) | foreach-object {$_.value}
-    ($Versions | Measure-Object -Maximum).Maximum
+    $ManifestPath = '.\PSTelegramAPI\PSTelegramAPI.psd1'
+    $ModuleManifest = Test-ModuleManifest -Path $ManifestPath
+    [System.Version]$ManifestVersion = $ModuleManifest.Version
+    Write-Output -InputObject ('Manifest Version  : {0}' -f $ManifestVersion)
 
-    $manifestPath = '.\PSTelegramAPI.psd1'
+    $PSGalleryModule = Find-Module -Name PSTelegramAPI -Repository PSGallery
+    [System.Version]$PSGalleryVersion = $PSGalleryModule.Version
+    Write-Output -InputObject ('PSGallery Version : {0}' -f $PSGalleryVersion)
 
-    # Start by importing the manifest to determine the version, then add 1 to the Build
-    $manifest = Test-ModuleManifest -Path $manifestPath
-    [System.Version]$version = $manifest.Version
-    [String]$newVersion = New-Object -TypeName System.Version -ArgumentList ($version.Major, $version.Minor, ($version.Build + 1))
-    Write-Output -InputObject ('New Module version: {0}' -f $newVersion)
+    If ($PSGalleryVersion -ge $ManifestVersion) {
 
-    # Update Manifest file with Release Notes
-    $README = Get-Content -Path .\README.md
-    $MarkdownObject = [Markdown.MAML.Parser.MarkdownParser]::new()
-    $ReleaseNotes = ((($MarkdownObject.ParseString($README).Children.Spans.Text) -match '\d\.\d\.\d') -split ' - ')[1]
+        [System.Version]$Version = New-Object -TypeName System.Version -ArgumentList ($PSGalleryVersion.Major, $PSGalleryVersion.Minor, ($PSGalleryVersion.Build + 1))
+        Write-Output -InputObject ('Updated Version   : {0}' -f $Version)
+        Update-ModuleManifest -ModuleVersion $Version -Path .\PSTelegramAPI\PSTelegramAPI.psd1 # -ReleaseNotes $ReleaseNotes
 
-    #Update Module with new version
-    Update-ModuleManifest -ModuleVersion $newVersion -Path .\PSTelegramAPI.psd1 -ReleaseNotes $ReleaseNotes
+    }
+
 }
 #endregion
 
 #region Task to Publish Module to PowerShell Gallery
 task PublishModule -If ($Configuration -eq 'Production') {
     Try {
-        # Build a splat containing the required details and make sure to Stop for errors which will trigger the catch
-        $params = @{
-            Path        = ('{0}\Output\PSTelegramAPI' -f $PSScriptRoot )
-            NuGetApiKey = $ENV:NuGetApiKey
-            ErrorAction = 'Stop'
+
+        # Publish to gallery with a few restrictions
+        if(
+            $env:BHModulePath -and
+            $env:BHBuildSystem -ne 'Unknown' -and
+            $env:BHBranchName -eq "master" -and
+            $env:BHCommitMessage -match '!publish'
+        )
+        {
+
+            # Build a splat containing the required details and make sure to Stop for errors which will trigger the catch
+            $params = @{
+                Path        = ".\PSTelegramAPI"
+                NuGetApiKey = $ENV:NuGetApiKey
+                ErrorAction = 'Stop'
+            }
+            Publish-Module @params
+            Write-Output -InputObject ('PSTelegramAPI PowerShell Module version published to the PowerShell Gallery')
+
         }
-        Publish-Module @params
-        Write-Output -InputObject ('PSTelegramAPI PowerShell Module version published to the PowerShell Gallery')
+        else
+        {
+            "Skipping deployment: To deploy, ensure that...`n" +
+            "`t* You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
+            "`t* You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
+            "`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage)" |
+                Write-Host
+        }
+
     }
     Catch {
         throw $_
@@ -147,17 +138,6 @@ task PublishModule -If ($Configuration -eq 'Production') {
 }
 #endregion
 
-#region Task clean up Output folder
-task Clean {
-    # Clean output folder
-    if ((Test-Path .\output)) {
-
-        Remove-Item -Path .\Output -Recurse -Force
-
-    }
-}
-#endregion
-
-#region Default Task. Runs Clean, Test, CopyModuleFiles Tasks
-task . Clean, Test, CopyModuleFiles, PublishModule
+#region Default Task. Runs Test, UpdateManifest, PublishModule Tasks
+task . Test, UpdateManifest, PublishModule
 #endregion

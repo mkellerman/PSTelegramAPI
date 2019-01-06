@@ -1,49 +1,40 @@
-
-# Docs: https://aka.ms/yaml
-name: $(Build.DefinitionName)_$(Date:yyyyMMdd))
-resources:
-- repo: self
-  clean: true
-
+name: $(Build.DefinitionName)_$(Date:yyyyMMdd)
 pr:
-- master
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - PSTelegram/*
 
 queue:
   name: Hosted VS2017
 
 steps:
-- powershell: .\bootstrap.ps1
-  displayName: 'Initialize Environment'
+- powershell: './PSTelegramAPI.bootstrap.ps1'
+  displayName: 'Invoke Bootstrap'
 
-- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
-  displayName: 'Build PowerShell Module'
-
-- task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
-  displayName: 'Pester Test Runner'
-  inputs:
-    scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
-    additionalModulePath: '$(System.DefaultWorkingDirectory)\output'
-    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\output'
-    resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
-    CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+- powershell: 'Invoke-Build -Configuration Production -Task Test'
+  displayName: 'Invoke Pester Tests'
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
-  condition: always()
   inputs:
-    testRunner: NUnit
-    searchFolder: '$(Common.TestResultsDirectory)'
+    testResultsFormat: NUnit
+    testResultsFiles: 'TestResults-*.xml'
+    searchFolder: '$(System.DefaultWorkingDirectory)/TestResults'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Code Coverage'
   inputs:
-    summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
-
-- powershell: Invoke-Build -Configuration 'Production' -Task PublishModule
-  displayName: 'Publish PowerShell Module'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/TestResults/CodeCoverage-*.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/TestResults'
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Build Artifacts'
+  displayName: 'Publish Artifact: PSTelegramAPI'
   inputs:
-    ArtifactName: Module
-    PathtoPublish: '$(System.DefaultWorkingDirectory)\output'
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/PSTelegramAPI'
+    ArtifactName: PSTelegramAPI
+
+- powershell: 'Invoke-Build -Configuration Production -Task UpdateManifest, PublishModule'
+  displayName: 'Publish PowerShell Module'
