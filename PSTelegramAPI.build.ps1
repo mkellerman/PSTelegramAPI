@@ -99,7 +99,7 @@ task UpdateManifest {
 task PublishModule -If ($Configuration -eq 'Production') {
     Try {
 
-        Get-BuildEnvironment | Out-Null
+        Set-BuildEnvironment
 
         # Publish to gallery with a few restrictions
         if(
