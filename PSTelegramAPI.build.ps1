@@ -98,14 +98,35 @@ task UpdateManifest {
 #region Task to Publish Module to PowerShell Gallery
 task PublishModule -If ($Configuration -eq 'Production') {
     Try {
-        # Build a splat containing the required details and make sure to Stop for errors which will trigger the catch
-        $params = @{
-            Path        = ".\PSTelegramAPI"
-            NuGetApiKey = $ENV:NuGetApiKey
-            ErrorAction = 'Stop'
+
+        # Publish to gallery with a few restrictions
+        if(
+            $env:BHModulePath -and
+            $env:BHBuildSystem -ne 'Unknown' -and
+            $env:BHBranchName -eq "master" -and
+            $env:BHCommitMessage -match '!publish'
+        )
+        {
+
+            # Build a splat containing the required details and make sure to Stop for errors which will trigger the catch
+            $params = @{
+                Path        = ".\PSTelegramAPI"
+                NuGetApiKey = $ENV:NuGetApiKey
+                ErrorAction = 'Stop'
+            }
+            Publish-Module @params
+            Write-Output -InputObject ('PSTelegramAPI PowerShell Module version published to the PowerShell Gallery')
+
         }
-        Publish-Module @params
-        Write-Output -InputObject ('PSTelegramAPI PowerShell Module version published to the PowerShell Gallery')
+        else
+        {
+            "Skipping deployment: To deploy, ensure that...`n" +
+            "`t* You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
+            "`t* You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
+            "`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage)" |
+                Write-Host
+        }
+
     }
     Catch {
         throw $_

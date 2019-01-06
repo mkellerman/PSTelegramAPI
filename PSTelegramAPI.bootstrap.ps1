@@ -7,8 +7,9 @@ param(
 )
 
 [ModuleSpecification[]]$RequiredModules = @(
-    @{ ModuleName = "InvokeBuild"; RequiredVersion = "5.4.2"}
-    @{ ModuleName = "Pester"; RequiredVersion = "4.4.4"}
+    @{ ModuleName = "InvokeBuild"; RequiredVersion = "5.4.2" }
+    @{ ModuleName = "Pester"; RequiredVersion = "4.4.4" }
+    @{ ModuleName = "BuildHelpers"; RequiredVersion = "2.0.3" }
 )
 
 $Policy = (Get-PSRepository PSGallery).InstallationPolicy
@@ -21,3 +22,6 @@ try {
 }
 
 $RequiredModules | Import-Module
+
+Write-Output "Build Environment Variables:"
+Set-BuildEnvironment -Passthru | Format-Table
