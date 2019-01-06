@@ -15,9 +15,10 @@ function Get-TLClientContacts {
 
     Process {
 
-        Write-Debug "`t Executing: GetContactsAsync()"
-
-        $Result = $TLClient.GetContactsAsync() | Wait-TLAsync
+        Do {
+            Write-Verbose "[$(Get-Date)] [INFO ]   > TLClient.GetContactsAsync()"
+            $Result = $TLClient.GetContactsAsync() | Wait-TLAsync
+        } While ($Result -eq $False)
 
     }
 
