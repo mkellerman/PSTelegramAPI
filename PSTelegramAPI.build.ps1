@@ -96,7 +96,7 @@ task Test {
 
     $PesterParams = @{
         Script = '.\Tests'
-        OutputFile = "${OutputPath}\Test-PSTelegramAPI.xml"
+        OutputFile = "${OutputPath}\TestResults-PSTelegramAPI.xml"
         CodeCoverage = '.\PSTelegramAPI\*\*.ps1'
         CodeCoverageOutputFile = "${OutputPath}\CodeCoverage-PSTelegramAPI.xml"
         CodeCoverageOutputFileFormat = 'JaCoCo'
