@@ -18,7 +18,7 @@ Import-Module PSTelegramAPI
 $TLClient = New-TLClient -apiId $ENV:TLApiId -apiHash $ENV:TLApiHash -phoneNumber $ENV:TLPhoneNumber
 
 # Get List of User Dialogs
-$TLUserDialog = Get-TLUserDialog -TLClient $TLClient
+$TLUserDialogs = Get-TLUserDialogs -TLClient $TLClient
 
 # Get latest 100 messages from each User in List
 ForEach ($User in $TLUserDialog) {
@@ -26,12 +26,20 @@ ForEach ($User in $TLUserDialog) {
 }
 
 # Find a specific User
-$TLPeer = $TLUserDialog.Where({ $_.Peer.Username -eq 'mkellerman' }).Peer
+$TLPeer = $TLUserDialogs.Where({ $_.Peer.Username -eq 'mkellerman' }).Peer
 
 # Send message to User
 Invoke-TLSendMessage -TLClient $TLClient -TLPeer $TLPeer -Message 'Hello World'
 ```
 
+# Completed
+
+* Get-TLUserDialogs
+* Get-TLContacts
+* Get-TLHistory
+* Invoke-TLSendMessage
+
 # References
 
-<https://github.com/sochix/TLSharp> : Telegram client library implemented in C#
+* [PSTelegramAPI](https://www.powershellgallery.com/packages/PSTelegramAPI/) : PowerShell Gallery
+* [TLSharp](https://github.com/sochix/TLSharp) : Telegram client library implemented in C#
