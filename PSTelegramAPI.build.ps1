@@ -5,12 +5,12 @@
 
 param ($Configuration = 'Development')
 
-#region use the most strict mode
-Set-StrictMode -Version Latest
+#region Set-BuildEnvironment
+Try { Set-BuildEnvironment -ErrorAction SilentlyContinue -Force } Catch { }
 #endregion
 
-#region Set-BuildEnvironment
-Set-BuildEnvironment -Force -ErrorAction SilentlyContinue
+#region use the most strict mode
+Set-StrictMode -Version Latest
 #endregion
 
 #region Task to Update TLSharp Package if newer version is released
