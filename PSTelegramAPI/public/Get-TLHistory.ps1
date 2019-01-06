@@ -3,34 +3,41 @@ function Get-TLHistory {
     [cmdletbinding()]
     Param(
         $TLClient,
-        $Peer,
+        [object]$Peer,
         [int]$OffsetId = 0,
         [int]$OffsetDate = 0,
         [int]$AddOffset = 0,
         [int]$Limit = [int]::MaxValue,
         [int]$MaxId = 0,
-        [int]$MinId = 0
+        [int]$MinId = 0,
+        [switch]$PassThru
     )
 
     Begin {
 
         Write-Verbose "[$(Get-Date)] [BEGIN] $($MyInvocation.MyCommand)"
 
+        $MessageTotal = 0
         $LimitPerRequest = 100
+
         $Results = New-Object System.Collections.ArrayList
+
+        $TLInputPeer = ConvertTo-TLInputPeer -TLPeer $Peer -Verbose:$false
 
     }
 
     Process {
 
-        $MessageTotal = 0
+
 
         Do {
 
             If ($Limit -lt $LimitPerRequest) { $LimitPerRequest = $Limit }
 
-            Write-Verbose "[$(Get-Date)] [INFO ]   > GetHistoryAsync ($Peer, ${OffsetId}, ${OffsetDate}, ${AddOffSet}, ${LimitPerRequest}, ${MaxId}, ${MinId})"
-            $Result = $TLClient.GetHistoryAsync($Peer, $OffsetId, $OffsetDate, $AddOffSet, $LimitPerRequest, $MaxId, $MinId) | Wait-TLAsync
+            Do {
+                Write-Verbose "[$(Get-Date)] [INFO ]   > GetHistoryAsync ($TLInputPeer, ${OffsetId}, ${OffsetDate}, ${AddOffSet}, ${LimitPerRequest}, ${MaxId}, ${MinId})"
+                $Result = $TLClient.GetHistoryAsync($TLInputPeer, $OffsetId, $OffsetDate, $AddOffSet, $LimitPerRequest, $MaxId, $MinId) | Wait-TLAsync
+            } While ($Result -eq $false)
 
             [void] $Results.Add($Result)
 
@@ -46,28 +53,32 @@ function Get-TLHistory {
 
         Switch ($Results[0].GetType().Name) {
             'TLChannelMessages' { $MessageCount = $Results[0].Count }
-            'TLMessages'        { $MessageCount = $Results.Messages.Count }
+            'TLMessagesSlice'   { $MessageCount = $Results[0].Count }
+            'TLMessages'        { $MessageCount = $Results[0].Messages.Count }
             Default {
                 Write-Warning "Unknown Type returned : $_"
             }
         }
 
-        [object[]]$TLUsers    = $Results.Users # | Group-Object Id | ForEach-Object { $_.Group[-1] }
-        [object[]]$TLChats    = $Results.Chats # | Group-Object Id | ForEach-Object { $_.Group[-1] }
-        [object[]]$TLMessages = $Results.Messages # | Group-Object Id | ForEach-Object { $_.Group[-1] }
+        Write-Verbose "[$(Get-Date)] [INFO ]   > Messages: $($Results.Messages.Count) | Users: $($Results.Users.Count) | Chats: $($Results.Chats.Count) | Count: $($MessageCount)"
 
-        Write-Verbose "[$(Get-Date)] [INFO ]   > Messages: $($TLMessages.Count) | Users: $($TLUsers.Count) | Chats: $($TLChats.Count) | Count: $($MessageCount)"
+        If ($PassThru) {
 
-        $Result = [PSCustomObject]@{
-            Users    = $Results | Select-Object -Expand Users
-            Chats    = $Results | Select-Object -Expand Chats
-            Messages = $Results | Select-Object -Expand Messages
-            Count = $MessageCount
+            ForEach ($Result in $Results) { $Result }
+
+        } Else {
+
+            [PSCustomObject]@{
+                InputPeer = $TLInputPeer
+                Users     = $Results.Users
+                Chats     = $Results.Chats
+                Messages  = $Results.Messages
+                Count     = $MessageCount
+            }
+
         }
 
         Write-Verbose "[$(Get-Date)] [END  ] $($MyInvocation.MyCommand)"
-
-        Return $Result
 
     }
 

@@ -20,23 +20,21 @@ function New-TLClient {
 
     Process {
 
-        Write-Debug "`t Executing: [TLSharp.Core.TelegramClient]::New(${ApiId}, '${ApiHash}', Null, ${PhoneNumber}, Null)"
+        Write-Verbose "[$(Get-Date)] [INFO ]   > [TLSharp.Core.TelegramClient]::New(${ApiId}, '${ApiHash}', Null, ${PhoneNumber}, Null)"
         $TLClient = [TLSharp.Core.TelegramClient]::New($ApiId, $ApiHash, $Null, $PhoneNumber, $Null)
 
         Do {
-
-            Write-Debug "`t Executing: TLClient.ConnectAsync()"
+            Write-Verbose "[$(Get-Date)] [INFO ]   > TLClient.ConnectAsync()"
             $Result = $TLClient.ConnectAsync() | Wait-TLAsync
-
-        } Until ($Result)
+        } While ($Result -eq $false)
 
         If (-Not $TLClient.IsUserAuthorized()) {
 
-            Write-Debug "`t Executing: TLClient.SendCodeRequestAsync('+${PhoneNumber}')"
+            Write-Verbose "[$(Get-Date)] [INFO ]   > TLClient.SendCodeRequestAsync('+${PhoneNumber}')"
             $Hash = $TLClient.SendCodeRequestAsync("+${PhoneNumber}") | Wait-TLAsync
 
             $Code = Read-Host "Code from telegram"
-            Write-Debug "`t Executing: TLClient.MakeAuthAsync(${PhoneNumber}, '${Hash}', ${Code})"
+            Write-Verbose "[$(Get-Date)] [INFO ]   > TLClient.MakeAuthAsync(${PhoneNumber}, '${Hash}', ${Code})"
             $Result = $TLClient.MakeAuthAsync($PhoneNumber, $Hash, $Code) | Wait-TLAsync
 
         }

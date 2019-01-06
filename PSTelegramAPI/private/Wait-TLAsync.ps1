@@ -16,13 +16,13 @@ function Wait-TLAsync {
 
         If ($AsyncTask.IsFaulted -or $AsyncTask.IsCanceled) {
 
-            Write-Warning "Wait-TLAsync: Error: $($AsyncTask.Exception.InnerException.Message)"
-
-            If ($TimeToWait = [int]$AsyncTask.Exception.InnerException.TimeToWait.TotalSeconds) {
+            If ([int]$TimeToWait = $AsyncTask.Exception.InnerException.TimeToWait.TotalSeconds) {
+                Write-Warning "Wait-TLAsync: Flood Prevention (TimeToWait: ${TimeToWait})."
                 Start-Sleep -Seconds $TimeToWait
-            } Else {
-                Throw $AsyncTask.Exception.InnerException.Message
+                Return $False
             }
+
+            Throw $AsyncTask.Exception.InnerException.Message
 
         }
 
