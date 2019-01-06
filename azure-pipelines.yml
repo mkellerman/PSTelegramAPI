@@ -3,9 +3,9 @@ pr:
   branches:
     include:
       - master
-    paths:
-      include:
-        - PSTelegram/*
+  paths:
+    include:
+      - PSTelegram/*
 
 queue:
   name: Hosted VS2017
