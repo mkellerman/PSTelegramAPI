@@ -45,7 +45,7 @@ function Get-TLUserDialog {
 
     End {
 
-        Write-Verbose "[$(Get-Date)] [INFO ] > Dialogs: $($Results.Dialogs.Count) | Users: $($Results.Users.Count) | Chats: $($Results.Chats.Count) | Messages: $($Results.Messages.Count)"
+        Write-Verbose "[$(Get-Date)] [INFO ]   > Dialogs: $($Results.Dialogs.Count) | Users: $($Results.Users.Count) | Chats: $($Results.Chats.Count) | Messages: $($Results.Messages.Count)"
 
         If ($PassThru) {
 
