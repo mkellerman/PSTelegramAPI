@@ -1,4 +1,4 @@
-name: $(Build.DefinitionName)_$(Date:yyyyMMdd))
+name: $(Build.DefinitionName)_$(Date:yyyyMMdd)
 pr:
 - master
 
@@ -7,7 +7,7 @@ queue:
 
 steps:
 - powershell: './bootstrap.ps1'
-  displayName: 'Invoke Pester Tests'
+  displayName: 'Initialize Environment'
 
 - powershell: 'Invoke-Build -Configuration Production -Task Test'
   displayName: 'Invoke Pester Tests'
