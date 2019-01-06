@@ -1,11 +1,7 @@
 name: $(Build.DefinitionName)_$(Date:yyyyMMdd)
-pr:
-  branches:
-    include:
-      - master
-  paths:
-    include:
-      - PSTelegram/*
+
+resources:
+- repo: self
 
 queue:
   name: Hosted VS2017
