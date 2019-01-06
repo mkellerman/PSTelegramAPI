@@ -99,6 +99,8 @@ task UpdateManifest {
 task PublishModule -If ($Configuration -eq 'Production') {
     Try {
 
+        Get-BuildEnvironment | Out-Null
+
         # Publish to gallery with a few restrictions
         if(
             $env:BHModulePath -and
