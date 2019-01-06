@@ -96,9 +96,9 @@ task Test {
 
     $PesterParams = @{
         Script = '.\Tests'
-        OutputFile = "${OutputPath}\TestResults.PSTelegramAPI.xml"
+        OutputFile = "${OutputPath}\Test-PSTelegramAPI.xml"
         CodeCoverage = '.\PSTelegramAPI\*\*.ps1'
-        CodeCoverageOutputFile = "${OutputPath}\CodeCoverage.PSTelegramAPI.xml"
+        CodeCoverageOutputFile = "${OutputPath}\CodeCoverage-PSTelegramAPI.xml"
     }
 
     $Result = Invoke-Pester @PesterParams -PassThru
