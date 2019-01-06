@@ -6,8 +6,8 @@ queue:
   name: Hosted VS2017
 
 steps:
-- powershell: './bootstrap.ps1'
-  displayName: 'Initialize Environment'
+- powershell: './PSTelegramAPI.bootstrap.ps1'
+  displayName: 'Invoke Bootstrap'
 
 - powershell: 'Invoke-Build -Configuration Production -Task Test'
   displayName: 'Invoke Pester Tests'
@@ -31,5 +31,5 @@ steps:
     PathtoPublish: '$(System.DefaultWorkingDirectory)/PSTelegramAPI'
     ArtifactName: PSTelegramAPI
 
-- powershell: 'Invoke-Build -Configuration Production -Task PublishModule'
+- powershell: 'Invoke-Build -Configuration Production -Task UpdateManifest, PublishModule'
   displayName: 'Publish PowerShell Module'
