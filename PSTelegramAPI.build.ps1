@@ -91,7 +91,18 @@ task CopyModuleFiles {
 
 #region Task to run all Pester tests in folder .\tests
 task Test {
-    $Result = Invoke-Pester .\tests -PassThru
+
+    $OutputPath = New-Item '.\TestResults' -ItemType Directory -Force
+
+    $PesterParams = @{
+        Script = '.\Tests'
+        OutputFile = "${OutputPath}\TestResults.PSTelegramAPI.xml"
+        CodeCoverage = '.\PSTelegramAPI\*\*.ps1'
+        CodeCoverageOutputFile = "${OutputPath}\CodeCoverage.PSTelegramAPI.xml"
+    }
+
+    $Result = Invoke-Pester @PesterParams -PassThru
+
     if ($Result.FailedCount -gt 0) {
         throw 'Pester tests failed'
     }

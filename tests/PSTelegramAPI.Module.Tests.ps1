@@ -1,6 +1,6 @@
 $ModuleName = 'PSTelegramAPI'
 $ModuleManifestName = "${ModuleName}.psd1"
-$ModuleManifestPath = "${PSScriptRoot}\${ModuleName}\${ModuleManifestName}"
+$ModuleManifestPath = "${PSScriptRoot}\..\${ModuleName}\${ModuleManifestName}"
 
 Describe 'General Module Tests' {
     It 'Passes Test-ModuleManifest' {

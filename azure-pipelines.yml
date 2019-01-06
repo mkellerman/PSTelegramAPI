@@ -11,26 +11,29 @@ steps:
 - powershell: .\bootstrap.ps1
   displayName: 'Initialize Environment'
 
-- task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
-  displayName: 'Pester Test Runner'
-  inputs:
-    scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
-    additionalModulePath: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
-    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
-    resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
-    CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+- powershell: Invoke-Build -Configuration 'Production' -Task Test
+  displayName: 'Invoke Pester Tests'
+
+# - task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
+#   displayName: 'Pester Test Runner'
+#   inputs:
+#     scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
+#     additionalModulePath: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
+#     CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
+#     resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+#     CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
   condition: always()
   inputs:
     testRunner: NUnit
-    searchFolder: '$(Common.TestResultsDirectory)'
+    searchFolder: '$(System.DefaultWorkingDirectory)\TestResults'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Code Coverage'
   inputs:
-    summaryFileLocation: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)\TestResults\CodeCoverage.PSTelegramAPI.xml'
 
 - powershell: Invoke-Build -Configuration 'Production' -Task PublishModule
   displayName: 'Publish PowerShell Module'
@@ -39,4 +42,4 @@ steps:
   displayName: 'Publish Build Artifacts'
   inputs:
     ArtifactName: Module
-    PathtoPublish: '$(System.DefaultWorkingDirectory)\output'
+    PathtoPublish: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
