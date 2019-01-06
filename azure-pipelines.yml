@@ -11,15 +11,12 @@ steps:
 - powershell: .\bootstrap.ps1
   displayName: 'Initialize Environment'
 
-- powershell: Invoke-Build -Configuration 'Production' -Task Clean, CopyModuleFiles
-  displayName: 'Build PowerShell Module'
-
 - task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
   displayName: 'Pester Test Runner'
   inputs:
     scriptFolder: '$(System.DefaultWorkingDirectory)\tests\*'
-    additionalModulePath: '$(System.DefaultWorkingDirectory)\output'
-    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\output'
+    additionalModulePath: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
+    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)\PSTelegramAPI'
     resultsFile: '$(Common.TestResultsDirectory)\Test-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
     CodeCoverageOutputFile: '$(Common.TestResultsDirectory)\Coverage-$(Build.DefinitionName)_$(Build.BuildNumber).xml'
 
