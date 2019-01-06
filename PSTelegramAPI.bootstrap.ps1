@@ -22,6 +22,3 @@ try {
 }
 
 $RequiredModules | Import-Module
-
-Write-Output "Build Environment Variables:"
-Set-BuildEnvironment -Passthru | Format-Table
