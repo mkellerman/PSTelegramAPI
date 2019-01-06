@@ -92,12 +92,12 @@ task CopyModuleFiles {
 #region Task to run all Pester tests in folder .\tests
 task Test {
 
-    $OutputPath = New-Item '.\TestResults' -ItemType Directory -Force
+    $OutputPath = New-Item -Path 'TestResults' -ItemType Directory -Force -Verbose
 
     $PesterParams = @{
         Script = '.\Tests'
         OutputFile = "${OutputPath}\TestResults-PSTelegramAPI.xml"
-        CodeCoverage = '.\PSTelegramAPI\*\*.ps1'
+        CodeCoverage = 'PSTelegramAPI\*\*.ps1'
         CodeCoverageOutputFile = "${OutputPath}\CodeCoverage-PSTelegramAPI.xml"
         CodeCoverageOutputFileFormat = 'JaCoCo'
     }
