@@ -1,4 +1,7 @@
-[![Build status](https://mkellerman.visualstudio.com/PSTelegramAPI/_apis/build/status/PSTelegramAPI-CI)](https://mkellerman.visualstudio.com/PSTelegramAPI/_build/latest?definitionId=3)
+[![PSGallery Version](https://img.shields.io/powershellgallery/v/PSTelegramAPI.svg?style=for-the-badge&label=PowerShell%20Gallery)](https://www.powershellgallery.com/packages/PSTelegramAPI/)
+![PSGallery Downloads](https://img.shields.io/powershellgallery/dt/PSTelegramAPI.svg?style=for-the-badge&label=Downloads)
+
+![Azure Pipeline](https://img.shields.io/azure-devops/build/mkellerman/PSTelegramAPI/3.svg?style=for-the-badge&label=Azure%20Pipeline)
 
 # PSTelegramAPI
 
