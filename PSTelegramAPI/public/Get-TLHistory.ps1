@@ -3,7 +3,7 @@ function Get-TLHistory {
     [cmdletbinding()]
     Param(
         $TLClient,
-        [object]$Peer,
+        [object]$TLPeer,
         [int]$OffsetId = 0,
         [int]$OffsetDate = 0,
         [int]$AddOffset = 0,
@@ -22,7 +22,7 @@ function Get-TLHistory {
 
         $Results = New-Object System.Collections.ArrayList
 
-        $TLInputPeer = ConvertTo-TLInputPeer -TLPeer $Peer -Verbose:$false
+        $TLInputPeer = ConvertTo-TLInputPeer -TLPeer $TLPeer -Verbose:$false
 
     }
 
