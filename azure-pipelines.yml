@@ -4,8 +4,8 @@ pr:
     include:
       - master
     paths:
-      exclude:
-        - */*.md
+      include:
+        - PSTelegram/*
 
 queue:
   name: Hosted VS2017
