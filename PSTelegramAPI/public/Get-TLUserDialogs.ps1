@@ -1,4 +1,4 @@
-function Get-TLUserDialog {
+function Get-TLUserDialogs {
 
     [cmdletbinding()]
     Param(
