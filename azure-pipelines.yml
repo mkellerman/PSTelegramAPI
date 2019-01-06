@@ -1,6 +1,10 @@
 
 # Docs: https://aka.ms/yaml
 name: $(Build.DefinitionName)_$(Date:yyyyMMdd))
+resources:
+- repo: self
+  clean: true
+
 pr:
 - master
 
