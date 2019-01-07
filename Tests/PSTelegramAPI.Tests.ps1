@@ -5,7 +5,7 @@ If (-Not $ENV:TLApiHash)     { $ENV:TLApiHash     = [Environment]::GetEnvironmen
 If (-Not $ENV:TLPhoneNumber) { $ENV:TLPhoneNumber = [Environment]::GetEnvironmentVariable("TLPhoneNumber", "User") }
 
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue -Force -Confirm:$False
-Import-Module $ENV:BHPSModuleManifest -Force
+$Script:Module = Import-Module $ENV:BHPSModuleManifest -Force -PassThru
 
 Describe 'Get-Module -Name PSTelegramAPI' {
     Context 'Strict mode' {
@@ -13,7 +13,6 @@ Describe 'Get-Module -Name PSTelegramAPI' {
         Set-StrictMode -Version Latest
 
         It 'Should Import' {
-            $Script:Module = Get-Module $ENV:BHPSModuleManifest
             $Script:Module.Name | Should be $ENV:BHProjectName
         }
         It 'Should have ExportedFunctions' {
@@ -53,37 +52,37 @@ Describe 'Execution End-to-End tests' {
     Context 'Strict mode' {
         Set-StrictMode -Version Latest
 
-        It 'New-TLClient: Should be IsConnected' {
+        It 'New-TLClient: Should be IsConnected' -Skip {
             $Script:TLClient = New-TLClient -ApiId $ENV:TLApiId -ApiHash $ENV:TLApiHash -PhoneNumber $ENV:TLPhoneNumber
             $Script:TLClient.IsUserAuthorized() | Should -Be $true
         }
 
-        It 'Get-TLContacts: Should be TLContacts' {
+        It 'Get-TLContacts: Should be TLContacts' -Skip {
             $Script:TLContacts = Get-TLContacts -TLClient $Script:TLClient
             $Script:TLContacts.GetType().Name | Should -Be 'TLContacts'
         }
 
-        It 'Get-TLUserDialogs: Should contain TLUserDialog' {
+        It 'Get-TLUserDialogs: Should contain TLUserDialog' -Skip {
             $Script:TLUserDialogs = Get-TLUserDialogs -TLClient $Script:TLClient
             $Script:TLUserDialogs.Constructor | Should -Contain '1728035348'
         }
 
-        It 'Get-TLUserDialogs: Should contain TLUser' {
+        It 'Get-TLUserDialogs: Should contain TLUser' -Skip {
             $Script:TLPeer = $Script:TLUserDialogs.Where({$_.Peer.username -eq 'mkellerman'}).Peer
             $Script:TLPeer.GetType().Name | Should -Be 'TLUser'
         }
 
-        It 'Get-TLUserDialogs: Should contain TLMessage' {
+        It 'Get-TLUserDialogs: Should contain TLMessage' -Skip {
             $Script:TLMessage = $Script:TLUserDialogs.Where({$_.Peer.username -eq 'mkellerman'}).Message
             $Script:TLMessage.GetType().Name | Should -Be 'TLMessage'
         }
 
-        It 'Get-TLHistory: Should contain TLMessage' {
+        It 'Get-TLHistory: Should contain TLMessage' -Skip {
             $Script:TLHistory = Get-TLHistory -TLClient $Script:TLClient -TLPeer $Script:TLPeer -Limit 1
             $Script:TLHistory.Messages[0].GetType().Name | Should -Be 'TLMessage'
         }
 
-        It 'Invoke-TLSendMessage: Should contain TLUpdateShortSentMessage' {
+        It 'Invoke-TLSendMessage: Should contain TLUpdateShortSentMessage' -Skip {
             $Script:TLSendMessage = Invoke-TLSendMessage -TLClient $Script:TLClient -TLPeer $Script:TLPeer -Message "Pester Test ${ENV:BHBuildNumber}"
         }
 
