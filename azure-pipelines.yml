@@ -10,6 +10,9 @@ steps:
 - powershell: './PSTelegramAPI.bootstrap.ps1'
   displayName: 'Invoke Bootstrap'
 
+- powershell: '& git clone https://github.com/ThePSAdmin/Pester.git Pester; & cd Pester; & git pull; & git checkout fix/jacocoreport; Get-Module Pester | Remove-Module; Import-Module ./Pester/Pester.psd1'
+  displayName: 'Install Pester fix/jacocoreport'
+
 - powershell: 'Invoke-Build -Configuration Production -Task Test'
   displayName: 'Invoke Pester Tests'
 
