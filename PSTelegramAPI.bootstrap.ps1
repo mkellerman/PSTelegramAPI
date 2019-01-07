@@ -22,3 +22,13 @@ try {
 }
 
 $RequiredModules | Import-Module
+
+# Install custom version of Pester
+& git clone https://github.com/ThePSAdmin/Pester.git Pester;
+& cd Pester;
+& git pull;
+& git checkout fix/jacocoreport;
+& cd ..;
+
+Get-Module Pester | Remove-Module;
+Import-Module ./Pester/Pester.psd1

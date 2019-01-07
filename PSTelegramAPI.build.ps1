@@ -6,7 +6,7 @@
 param ($Configuration = 'Development')
 
 #region Set-BuildEnvironment
-Try { Set-BuildEnvironment -ErrorAction SilentlyContinue -Force } Catch { }
+Try { Set-BuildEnvironment -Path '.\PSTelegramAPI' -ErrorAction SilentlyContinue -Force } Catch { }
 #endregion
 
 #region use the most strict mode

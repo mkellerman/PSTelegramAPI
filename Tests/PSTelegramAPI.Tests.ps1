@@ -1,4 +1,3 @@
-Try { Set-BuildEnvironment -Path "${PSScriptRoot}\.." -ErrorAction SilentlyContinue -Force } Catch { }
 
 If (-Not $ENV:TLApiId)       { $ENV:TLApiId       = [Environment]::GetEnvironmentVariable("TLApiId", "User")       }
 If (-Not $ENV:TLApiHash)     { $ENV:TLApiHash     = [Environment]::GetEnvironmentVariable("TLApiHash", "User")     }
@@ -40,7 +39,7 @@ Describe 'Execute Function tests' {
         It 'New-TLClient: Should fail with invalid ApiHash' {
             { New-TLClient -ApiId $ENV:TLApiId -ApiHash $Invalid_ApiHash -PhoneNumber $Invalid_PhoneNumber } | Should -Throw "API_ID_INVALID"
         }
-        It 'New-TLClient: Should prompt for Code' {
+        It 'New-TLClient: Should prompt for Code' -Skip {
             Mock 'Read-Host' { 11111 } -ModuleName PSTelegramAPI
             { New-TLClient -ApiId $ENV:TLApiId -ApiHash $ENV:TLApiHash -PhoneNumber $Invalid_PhoneNumber } | Should -Throw "The numeric code used to authenticate does not match the numeric code sent by SMS/Telegram"
             Assert-MockCalled -CommandName Read-Host -ModuleName PSTelegramAPI -Exactly 1
