@@ -20,8 +20,12 @@ function New-TLClient {
 
     Process {
 
-        Write-Verbose "[$(Get-Date)] [INFO ]   > [TLSharp.Core.TelegramClient]::New(${ApiId}, '${ApiHash}', Null, ${PhoneNumber}, Null)"
-        $TLClient = [TLSharp.Core.TelegramClient]::New($ApiId, $ApiHash, $Null, $PhoneNumber, $Null)
+        function New-TelegramClient ($apiId, $apiHash, $store = $Null, $sessionUserId, $handler = $Null) {
+            Write-Verbose "[$(Get-Date)] [INFO ]   > [TLSharp.Core.TelegramClient]::New(${ApiId}, '${ApiHash}', Null, ${sessionUserId}, Null)"
+            [TLSharp.Core.TelegramClient]::New($apiId, $apiHash, $store, $sessionUserId, $handler)
+        }
+
+        $TLClient = New-TelegramClient -apiId $ApiId -apiHash $ApiHash -sessionUserId $PhoneNumber
 
         Do {
             Write-Verbose "[$(Get-Date)] [INFO ]   > TLClient.ConnectAsync()"
